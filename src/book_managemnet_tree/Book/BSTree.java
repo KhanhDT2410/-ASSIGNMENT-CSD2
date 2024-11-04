@@ -12,22 +12,32 @@ public class BSTree {
         root = null;
     }
 
+    // Load data from file and add to the tree
     public void loadDataFromFile(String filename) {
         try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(" \\| ");
-                Book book = new Book(parts[0], parts[1], parts[2], parts[3], parts[4], Integer.parseInt(parts[5]),
-                        Integer.parseInt(parts[6]), Double.parseDouble(parts[7]));
-                add(book);
+                Book book = new Book(parts[0], parts[1], parts[2], parts[3], parts[4], 
+                    Integer.parseInt(parts[5]), Integer.parseInt(parts[6]), Double.parseDouble(parts[7]));
+                add(book);  // Requirement 1: Adding a book to the BST
             }
         } catch (IOException e) {
             System.out.println("Error reading file: " + e.getMessage());
         }
     }
 
+    // Validate and add a book to the tree
     public void add(Book book) {
-        root = addRecursive(root, book);
+        if (validateBookData(book)) {
+            root = addRecursive(root, book);  // Requirement 1: Adding books recursively
+        } else {
+            System.out.println("Invalid book data, cannot add to the tree.");
+        }
+    }
+
+    private boolean validateBookData(Book book) {
+        return book != null && book.bcode != null && !book.bcode.isEmpty() && book.price >= 0;
     }
 
     private BSTNode addRecursive(BSTNode node, Book book) {
@@ -42,8 +52,9 @@ public class BSTree {
         return node;
     }
 
+    // In-order traversal to display all books
     public void inOrderTraversal() {
-        inOrderRecursive(root);
+        inOrderRecursive(root);  // Requirement 2: Display books in sorted order
     }
 
     private void inOrderRecursive(BSTNode node) {
@@ -54,9 +65,10 @@ public class BSTree {
         }
     }
 
+    // Save all books to file
     public void saveToFile(String filename) {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(filename))) {
-            saveInOrder(root, bw);
+            saveInOrder(root, bw);  // Requirement 3: Save books in sorted order to file
         } catch (IOException e) {
             System.out.println("Error writing to file: " + e.getMessage());
         }
@@ -71,8 +83,9 @@ public class BSTree {
         }
     }
 
+    // Search for a book by bcode
     public Book search(String bcode) {
-        return searchRecursive(root, bcode);
+        return searchRecursive(root, bcode);  // Requirement 4: Search by bcode
     }
 
     private Book searchRecursive(BSTNode node, String bcode) {
@@ -89,8 +102,14 @@ public class BSTree {
         }
     }
 
+    // Delete a book by bcode using Copying method
     public void deleteByCopying(String bcode) {
-        root = deleteByCopyingRecursive(root, bcode);
+        Book book = search(bcode);
+        if (book != null && book.lended == 0) {  // Requirement 5: Only delete if not lent out
+            root = deleteByCopyingRecursive(root, bcode);
+        } else {
+            System.out.println("Book cannot be deleted. Either not found or currently lent out.");
+        }
     }
 
     private BSTNode deleteByCopyingRecursive(BSTNode node, String bcode) {
@@ -102,13 +121,11 @@ public class BSTree {
         } else if (bcode.compareTo(node.data.bcode) > 0) {
             node.right = deleteByCopyingRecursive(node.right, bcode);
         } else {
-            // Node to be deleted found
             if (node.left == null)
                 return node.right;
             if (node.right == null)
                 return node.left;
 
-            // Find the largest node in the left subtree
             BSTNode largest = findLargest(node.left);
             node.data = largest.data;
             node.left = deleteByCopyingRecursive(node.left, largest.data.bcode);
@@ -116,15 +133,14 @@ public class BSTree {
         return node;
     }
 
-    private BSTNode findLargest(BSTNode node) {
-        while (node.right != null) {
-            node = node.right;
-        }
-        return node;
-    }
-
+    // Delete a book by bcode using Merging method
     public void deleteByMerging(String bcode) {
-        root = deleteByMergingRecursive(root, bcode);
+        Book book = search(bcode);
+        if (book != null && book.lended == 0) {  // Requirement 5: Only delete if not lent out
+            root = deleteByMergingRecursive(root, bcode);
+        } else {
+            System.out.println("Book cannot be deleted. Either not found or currently lent out.");
+        }
     }
 
     private BSTNode deleteByMergingRecursive(BSTNode node, String bcode) {
@@ -136,13 +152,11 @@ public class BSTree {
         } else if (bcode.compareTo(node.data.bcode) > 0) {
             node.right = deleteByMergingRecursive(node.right, bcode);
         } else {
-            // Node to be deleted found
             if (node.left == null)
                 return node.right;
             if (node.right == null)
                 return node.left;
 
-            // Merge left subtree with the right subtree
             BSTNode leftSubtree = node.left;
             BSTNode rightSubtree = node.right;
             node = leftSubtree;
@@ -152,7 +166,20 @@ public class BSTree {
         return node;
     }
 
-    // Bước 1: Lưu các nút cây vào danh sách theo thứ tự in-order
+    private BSTNode findLargest(BSTNode node) {
+        while (node.right != null) {
+            node = node.right;
+        }
+        return node;
+    }
+
+    // Balance the tree
+    public void balanceTree() {
+        ArrayList<Book> books = new ArrayList<>();
+        storeInOrder(root, books);
+        root = buildBalancedTree(books, 0, books.size() - 1);  // Requirement 6: Balance the tree
+    }
+
     private void storeInOrder(BSTNode node, ArrayList<Book> books) {
         if (node != null) {
             storeInOrder(node.left, books);
@@ -161,7 +188,6 @@ public class BSTree {
         }
     }
 
-    // Bước 2: Xây dựng cây cân bằng từ danh sách
     private BSTNode buildBalancedTree(ArrayList<Book> books, int start, int end) {
         if (start > end)
             return null;
@@ -175,13 +201,7 @@ public class BSTree {
         return node;
     }
 
-    // Hàm cân bằng cây chính
-    public void balanceTree() {
-        ArrayList<Book> books = new ArrayList<>();
-        storeInOrder(root, books);
-        root = buildBalancedTree(books, 0, books.size() - 1);
-    }
-
+    // Breadth-first traversal of the tree
     public void breadthFirstTraversal() {
         if (root == null)
             return;
@@ -191,7 +211,7 @@ public class BSTree {
 
         while (!queue.isEmpty()) {
             BSTNode node = queue.poll();
-            System.out.println(node.data);
+            System.out.println(node.data);  // Requirement 7: Display books in breadth-first order
 
             if (node.left != null)
                 queue.add(node.left);
@@ -200,8 +220,9 @@ public class BSTree {
         }
     }
 
+    // Count the total number of books in the tree
     public int countBooks() {
-        return countBooksRecursive(root);
+        return countBooksRecursive(root);  // Requirement 8: Count total books
     }
 
     private int countBooksRecursive(BSTNode node) {
@@ -210,8 +231,9 @@ public class BSTree {
         return 1 + countBooksRecursive(node.left) + countBooksRecursive(node.right);
     }
 
+    // Search for a book by title
     public Book searchByTitle(String title) {
-        return searchByTitleRecursive(root, title);
+        return searchByTitleRecursive(root, title);  // Requirement 9: Search by title
     }
 
     private Book searchByTitleRecursive(BSTNode node, String title) {
@@ -227,21 +249,18 @@ public class BSTree {
         return searchByTitleRecursive(node.right, title);
     }
 
-    public Book searchByPrice(double price) {
-        return searchByPriceRecursive(root, price);
-    }
-
-    private Book searchByPriceRecursive(BSTNode node, double price) {
-        if (node == null)
+    // List unreturned lending info by bcode
+    public Book searchLendedByBcode(String bcode) {
+        Book book = search(bcode);  // Requirement 10: Display unreturned lending info by bcode
+        if (book == null) {
+            System.out.println("Book not found.");
             return null;
-        if (node.data.price == price)
-            return node.data;
-
-        Book leftSearch = searchByPriceRecursive(node.left, price);
-        if (leftSearch != null)
-            return leftSearch;
-
-        return searchByPriceRecursive(node.right, price);
+        }
+        if (book.lended > 0) {
+            System.out.println("Book is currently lent out with " + book.lended + " copies on loan.");
+        } else {
+            System.out.println("Book is available.");
+        }
+        return book;
     }
 }
-

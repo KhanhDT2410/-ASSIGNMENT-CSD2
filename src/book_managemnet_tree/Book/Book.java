@@ -4,10 +4,6 @@
  */
 package book_managemnet_tree.Book;
 
-/**
- *
- * @author HA DUC
- */
 public class Book {
     String bcode;
     String title;
